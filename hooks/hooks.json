@@ -1,0 +1,27 @@
+{
+  "description": "Smart notifications — sound + toast when away, silent when focused, idle detection after 30s",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/stop-notify.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/input-notify.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

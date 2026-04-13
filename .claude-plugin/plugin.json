@@ -1,0 +1,15 @@
+{
+  "name": "smart-notifications",
+  "description": "Smart macOS notifications with sound — notifies when away, stays silent when focused, catches you when idle. Toggle on/off with /smart-notifications.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Nikhil PN"
+  },
+  "keywords": [
+    "notifications",
+    "macos",
+    "sound",
+    "hooks",
+    "productivity"
+  ]
+}
