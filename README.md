@@ -31,7 +31,7 @@
 ### One-command install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/claude-smart-notifications.git /tmp/claude-smart-notifications && bash /tmp/claude-smart-notifications/scripts/install.sh
+git clone https://github.com/nikhil-pn/claude-smart-notifications.git /tmp/claude-smart-notifications && bash /tmp/claude-smart-notifications/scripts/install.sh
 ```
 
 ### Manual install
