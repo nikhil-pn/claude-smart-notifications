@@ -35,10 +35,10 @@ case "$app" in
         [ $(( now - last )) -lt 300 ] && exit 0
       fi
       terminal-notifier -title "You there?" -message "Claude needs your input." -group claude-input -sound Bottle
-      sleep 3
-      terminal-notifier -remove claude-input
       date +%s > "'"$COOLDOWN_FILE"'"
       rm -f "'"$PIDFILE"'"
+      sleep 3
+      terminal-notifier -remove claude-input
     ' >/dev/null 2>&1 &
     echo $! > "$PIDFILE"
     exit 0
