@@ -1,19 +1,27 @@
 #!/bin/bash
-# Uninstall Claude Code Smart Notifications plugin
-set -e
-
-PLUGIN_DIR="$HOME/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/smart-notifications"
-
+# Uninstall Claude Code Smart Notifications
 echo "Uninstalling Smart Notifications..."
 
-# Kill any active idle timers
+# Kill pending timers
 for f in /tmp/claude-idle-stop.pid /tmp/claude-idle-input.pid; do
   [ -f "$f" ] && kill "$(cat "$f")" 2>/dev/null
   rm -f "$f"
 done
+rm -f /tmp/claude-idle-stop.cooldown /tmp/claude-idle-input.cooldown
+
+# Remove scripts
+rm -f "$HOME/.claude/scripts/stop-notify.sh"
+rm -f "$HOME/.claude/scripts/input-notify.sh"
+
+# Remove skill
+rm -rf "$HOME/.claude/skills/smart-notifications"
 
 # Remove toggle file
 rm -f "$HOME/.claude/.smart-notifications-enabled"
+
+# Clear any lingering notifications
+terminal-notifier -remove claude-stop 2>/dev/null
+terminal-notifier -remove claude-input 2>/dev/null
 
 # Restore original terminal-notifier icon
 TN_APP=$(find /opt/homebrew/Cellar/terminal-notifier /usr/local/Cellar/terminal-notifier 2>/dev/null -name "terminal-notifier.app" -maxdepth 3 | head -1)
@@ -26,7 +34,7 @@ if [ -n "$TN_APP" ]; then
   fi
 fi
 
-# Remove plugin
-rm -rf "$PLUGIN_DIR"
-
-echo "Done! Restart Claude Code for changes to take effect."
+echo ""
+echo "Done! Scripts, skill, and timers removed."
+echo "Remember to remove the Stop and Notification hooks from ~/.claude/settings.json"
+echo "Restart Claude Code for changes to take effect."

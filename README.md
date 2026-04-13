@@ -20,6 +20,10 @@
 
 **Idle detection** — if you're on the terminal but step away (no input for 30s), it notifies you anyway.
 
+**Auto-dismiss** — notifications disappear from notification center after the sound plays. No clutter.
+
+**One-time idle alerts** — idle notifications have a 5-minute cooldown so you only get notified once, not spammed.
+
 **Toggle on/off** — use `/smart-notifications on|off|status` inside Claude Code.
 
 **Claude logo** — notifications show the Claude icon instead of the default terminal icon.
@@ -44,30 +48,61 @@ brew install terminal-notifier
 
 After installing, go to **System Settings > Notifications > terminal-notifier** and make sure notifications are enabled (set to **Banners** or **Alerts**).
 
-**2. Copy the plugin**
+**2. Copy scripts and skill**
 
 ```bash
-PLUGIN_DIR="$HOME/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/smart-notifications"
-mkdir -p "$PLUGIN_DIR"
-cp -r .claude-plugin hooks scripts skills assets "$PLUGIN_DIR/"
-chmod +x "$PLUGIN_DIR/scripts/"*.sh
+# Copy notification scripts
+mkdir -p ~/.claude/scripts
+cp scripts/stop-notify.sh scripts/input-notify.sh ~/.claude/scripts/
+chmod +x ~/.claude/scripts/*.sh
+
+# Copy slash command skill
+mkdir -p ~/.claude/skills/smart-notifications
+cp skills/smart-notifications/SKILL.md ~/.claude/skills/smart-notifications/
 ```
 
-**3. Enable notifications**
+**3. Add hooks to settings.json**
+
+Add these hooks to your `~/.claude/settings.json` inside the `"hooks"` object:
+
+```json
+"Stop": [
+  {
+    "hooks": [
+      {
+        "type": "command",
+        "command": "bash ~/.claude/scripts/stop-notify.sh",
+        "timeout": 5
+      }
+    ]
+  }
+],
+"Notification": [
+  {
+    "hooks": [
+      {
+        "type": "command",
+        "command": "bash ~/.claude/scripts/input-notify.sh",
+        "timeout": 5
+      }
+    ]
+  }
+]
+```
+
+**4. Enable notifications**
 
 ```bash
 touch ~/.claude/.smart-notifications-enabled
 ```
 
-**4. (Optional) Set Claude logo as notification icon**
+**5. (Optional) Set Claude logo as notification icon**
 
 ```bash
-bash "$PLUGIN_DIR/scripts/setup-icon.sh"
+bash scripts/setup-icon.sh
 ```
 
-**5. Restart Claude Code**
-
-The plugin loads on startup. Restart Claude Code (or start a new session) to activate.
+**6. Restart Claude Code**
 
 ---
 
@@ -95,7 +130,7 @@ Are you on Terminal / iTerm2 / VS Code / Cursor / Claude desktop?
     |                          |
     v                          v
 Start 30s idle timer      Notify immediately
-    |                    (sound + toast)
+    |                    (sound + toast → auto-dismiss)
     v
 Still idle after 30s?
     |           |
@@ -103,7 +138,7 @@ Still idle after 30s?
     |
     v
 Notify with Bottle sound
-"You there?"
+"You there?" (auto-dismiss, 5min cooldown)
 ```
 
 ---
@@ -121,7 +156,7 @@ afplay /System/Library/Sounds/Bottle.aiff  # Idle notification sound
 **Test notification:**
 
 ```bash
-terminal-notifier -title 'Done!' -message 'Check your Claude terminal.'
+terminal-notifier -title 'Done!' -message 'Check your Claude terminal.' -group test && afplay /System/Library/Sounds/Purr.aiff && terminal-notifier -remove test
 ```
 
 **Test app detection:**
@@ -139,6 +174,7 @@ osascript -e 'tell application "System Events" to get name of first application 
 | Change sounds | Edit `stop-notify.sh` / `input-notify.sh` — replace sound names with any file from `/System/Library/Sounds/` |
 | Add more editors | Add app names to the `case` statement in both scripts (e.g., `Warp\|Alacritty`) |
 | Change idle timeout | Replace `sleep 30` with your preferred seconds |
+| Change cooldown | Replace `300` (seconds) in cooldown check with your preferred duration |
 | Change messages | Edit `-title` and `-message` values in the scripts |
 | List available sounds | `ls /System/Library/Sounds/` |
 
@@ -147,15 +183,18 @@ osascript -e 'tell application "System Events" to get name of first application 
 ## Uninstall
 
 ```bash
-bash ~/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/smart-notifications/scripts/uninstall.sh
-```
-
-Or manually:
-
-```bash
-rm -rf ~/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/smart-notifications
+# Remove scripts and skill
+rm -f ~/.claude/scripts/stop-notify.sh ~/.claude/scripts/input-notify.sh
+rm -rf ~/.claude/skills/smart-notifications
 rm -f ~/.claude/.smart-notifications-enabled
+
+# Kill any pending timers
+kill $(cat /tmp/claude-idle-stop.pid 2>/dev/null) 2>/dev/null
+kill $(cat /tmp/claude-idle-input.pid 2>/dev/null) 2>/dev/null
+rm -f /tmp/claude-idle-stop.pid /tmp/claude-idle-input.pid /tmp/claude-idle-stop.cooldown /tmp/claude-idle-input.cooldown
 ```
+
+Then remove the `Stop` and `Notification` hooks from `~/.claude/settings.json`.
 
 ---
 
@@ -163,10 +202,6 @@ rm -f ~/.claude/.smart-notifications-enabled
 
 ```
 claude-smart-notifications/
-  .claude-plugin/
-    plugin.json              # Plugin metadata
-  hooks/
-    hooks.json               # Hook declarations (Stop + Notification)
   scripts/
     stop-notify.sh           # Task complete notification logic
     input-notify.sh          # Needs input notification logic

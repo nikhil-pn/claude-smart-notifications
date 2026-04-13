@@ -1,10 +1,10 @@
 #!/bin/bash
-# Install Claude Code Smart Notifications plugin
+# Install Claude Code Smart Notifications
 set -e
 
-PLUGIN_DIR="$HOME/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/smart-notifications"
+SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
-echo "Installing Smart Notifications plugin..."
+echo "Installing Smart Notifications..."
 
 # Check for terminal-notifier
 if ! command -v terminal-notifier &> /dev/null; then
@@ -12,23 +12,33 @@ if ! command -v terminal-notifier &> /dev/null; then
   brew install terminal-notifier
 fi
 
-# Create plugin directory
-mkdir -p "$PLUGIN_DIR"/{.claude-plugin,hooks,scripts,skills/smart-notifications}
+# Copy notification scripts
+mkdir -p "$HOME/.claude/scripts"
+cp "$SCRIPT_DIR/scripts/stop-notify.sh" "$HOME/.claude/scripts/stop-notify.sh"
+cp "$SCRIPT_DIR/scripts/input-notify.sh" "$HOME/.claude/scripts/input-notify.sh"
+chmod +x "$HOME/.claude/scripts/"*.sh
 
-# Copy plugin files
-SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+# Copy slash command skill
+mkdir -p "$HOME/.claude/skills/smart-notifications"
+cp "$SCRIPT_DIR/skills/smart-notifications/SKILL.md" "$HOME/.claude/skills/smart-notifications/SKILL.md"
 
-cp "$SCRIPT_DIR/.claude-plugin/plugin.json"                    "$PLUGIN_DIR/.claude-plugin/plugin.json"
-cp "$SCRIPT_DIR/hooks/hooks.json"                              "$PLUGIN_DIR/hooks/hooks.json"
-cp "$SCRIPT_DIR/scripts/stop-notify.sh"                        "$PLUGIN_DIR/scripts/stop-notify.sh"
-cp "$SCRIPT_DIR/scripts/input-notify.sh"                       "$PLUGIN_DIR/scripts/input-notify.sh"
-cp "$SCRIPT_DIR/scripts/setup-icon.sh"                         "$PLUGIN_DIR/scripts/setup-icon.sh"
-cp "$SCRIPT_DIR/skills/smart-notifications/SKILL.md"           "$PLUGIN_DIR/skills/smart-notifications/SKILL.md"
-mkdir -p "$PLUGIN_DIR/assets"
-cp "$SCRIPT_DIR/assets/claude-logo.png"                        "$PLUGIN_DIR/assets/claude-logo.png"
-
-# Make scripts executable
-chmod +x "$PLUGIN_DIR/scripts/"*.sh
+# Add hooks to settings.json
+SETTINGS="$HOME/.claude/settings.json"
+if [ -f "$SETTINGS" ]; then
+  # Check if hooks already exist
+  if grep -q "stop-notify.sh" "$SETTINGS"; then
+    echo "Hooks already configured in settings.json"
+  else
+    echo ""
+    echo "Add these hooks to your ~/.claude/settings.json under \"hooks\":"
+    echo ""
+    echo '  "Stop": [{ "hooks": [{ "type": "command", "command": "bash ~/.claude/scripts/stop-notify.sh", "timeout": 5 }] }],'
+    echo '  "Notification": [{ "hooks": [{ "type": "command", "command": "bash ~/.claude/scripts/input-notify.sh", "timeout": 5 }] }]'
+    echo ""
+  fi
+else
+  echo "No settings.json found. Create one at ~/.claude/settings.json with the hooks."
+fi
 
 # Enable notifications by default
 touch "$HOME/.claude/.smart-notifications-enabled"
@@ -38,7 +48,7 @@ echo ""
 read -p "Replace terminal-notifier icon with Claude logo? (y/n) " -n 1 -r
 echo ""
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-  bash "$PLUGIN_DIR/scripts/setup-icon.sh"
+  bash "$SCRIPT_DIR/scripts/setup-icon.sh"
 fi
 
 echo ""
@@ -46,5 +56,6 @@ echo "Done! Smart Notifications installed."
 echo ""
 echo "  Toggle:  /smart-notifications on|off|status"
 echo "  Sounds:  Purr (task done) | Glass (needs input) | Bottle (idle)"
+echo "  Features: Auto-dismiss | No clutter | 5min idle cooldown"
 echo ""
-echo "Restart Claude Code for the plugin to load."
+echo "Restart Claude Code to activate."
