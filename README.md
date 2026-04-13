@@ -4,6 +4,7 @@
 
 ![macOS](https://img.shields.io/badge/macOS-only-black)
 ![Claude Code](https://img.shields.io/badge/Claude_Code-plugin-orange)
+![Tests](https://img.shields.io/badge/tests-27%2F28_passed-brightgreen)
 
 ---
 
@@ -16,13 +17,15 @@
 | Idle 30s on terminal (AFK) | **You there?** — Claude finished / needs input. | Bottle |
 | Active on terminal | Nothing. No interruptions. | Silent |
 
-**Smart detection** — skips notifications when you're focused on Terminal, iTerm2, VS Code, Cursor, or Claude desktop.
+**Smart detection** — skips notifications when you're focused on Terminal, iTerm2, VS Code, Cursor, or Comet.
 
 **Idle detection** — if you're on the terminal but step away (no input for 30s), it notifies you anyway.
 
-**Auto-dismiss** — notifications disappear from notification center after the sound plays. No clutter.
+**Auto-dismiss** — notifications appear with sound, stay visible for 3 seconds, then auto-dismiss. No clutter.
 
 **One-time idle alerts** — idle notifications have a 5-minute cooldown so you only get notified once, not spammed.
+
+**Non-blocking sound** — uses `terminal-notifier -sound` flag for reliable, non-blocking audio. No `afplay` dependency.
 
 **Toggle on/off** — use `/smart-notifications on|off|status` inside Claude Code.
 
@@ -124,7 +127,7 @@ Inside Claude Code:
 Claude finishes a task / needs input
     |
     v
-Are you on Terminal / iTerm2 / VS Code / Cursor / Claude desktop?
+Are you on Terminal / iTerm2 / VS Code / Cursor / Comet?
     |                          |
    YES                         NO
     |                          |
@@ -145,24 +148,20 @@ Notify with Bottle sound
 
 ## Test
 
-**Test sounds:**
+See [TEST.md](TEST.md) for the full automated test report (27/28 passed).
+
+**Quick manual tests:**
 
 ```bash
-afplay /System/Library/Sounds/Purr.aiff   # Task complete sound
-afplay /System/Library/Sounds/Glass.aiff   # Needs input sound
-afplay /System/Library/Sounds/Bottle.aiff  # Idle notification sound
-```
+# Test notification with sound
+terminal-notifier -title 'Done!' -message 'Check your Claude terminal.' -group test -sound Purr
 
-**Test notification:**
-
-```bash
-terminal-notifier -title 'Done!' -message 'Check your Claude terminal.' -group test && afplay /System/Library/Sounds/Purr.aiff && terminal-notifier -remove test
-```
-
-**Test app detection:**
-
-```bash
+# Test app detection
 osascript -e 'tell application "System Events" to get name of first application process whose frontmost is true'
+
+# Test the actual scripts
+bash ~/.claude/scripts/stop-notify.sh    # Trigger stop notification
+bash ~/.claude/scripts/input-notify.sh   # Trigger input notification
 ```
 
 ---
@@ -219,7 +218,7 @@ claude-smart-notifications/
 
 ## Requirements
 
-- macOS (uses `osascript`, `afplay`, `sips`, `iconutil`)
+- macOS (uses `osascript`, `sips`, `iconutil`)
 - [Homebrew](https://brew.sh)
 - [terminal-notifier](https://github.com/julienXX/terminal-notifier) (`brew install terminal-notifier`)
 - [Claude Code](https://claude.ai/code)
