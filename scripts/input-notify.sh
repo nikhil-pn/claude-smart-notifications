@@ -1,56 +1,48 @@
 #!/bin/bash
 # Smart Notification — Notification hook (needs input)
 # Sound: Glass (away) / Bottle (idle 30s)
-# Notifications auto-dismiss and don't clutter notification center
+# -group ensures only one notification per type (replaces old, no clutter)
 
 TOGGLE_FILE="$HOME/.claude/.smart-notifications-enabled"
 PIDFILE="/tmp/claude-idle-input.pid"
 COOLDOWN_FILE="/tmp/claude-idle-input.cooldown"
 
-# Check if notifications are enabled
 [ ! -f "$TOGGLE_FILE" ] && exit 0
 
 # Kill any existing idle timer
 [ -f "$PIDFILE" ] && kill "$(cat "$PIDFILE")" 2>/dev/null
 rm -f "$PIDFILE"
 
+# Clean up stale PID file from old script version
+rm -f /tmp/claude-idle-notify.pid
+
 # Detect frontmost app
-app=$(osascript -e 'tell application "System Events" to get name of first application process whose frontmost is true')
+app=$(osascript -e 'tell application "System Events" to get name of first application process whose frontmost is true' 2>/dev/null)
 
 # Terminal apps — start 30s idle timer with Bottle sound (one-time only)
 case "$app" in
   Terminal|iTerm2|Code|Cursor|Comet)
-    # Check cooldown — only one idle notification per 5 minutes
     if [ -f "$COOLDOWN_FILE" ]; then
       last=$(cat "$COOLDOWN_FILE")
       now=$(date +%s)
-      elapsed=$(( now - last ))
-      [ "$elapsed" -lt 300 ] && exit 0
+      [ $(( now - last )) -lt 300 ] && exit 0
     fi
-    (
+    nohup bash -c '
       sleep 30
-      # Re-check cooldown before firing
-      if [ -f "$COOLDOWN_FILE" ]; then
-        last=$(cat "$COOLDOWN_FILE")
+      if [ -f "'"$COOLDOWN_FILE"'" ]; then
+        last=$(cat "'"$COOLDOWN_FILE"'")
         now=$(date +%s)
-        elapsed=$(( now - last ))
-        [ "$elapsed" -lt 300 ] && exit 0
+        [ $(( now - last )) -lt 300 ] && exit 0
       fi
-      terminal-notifier -title 'You there?' -message 'Claude needs your input.' -group claude-input
-      afplay /System/Library/Sounds/Bottle.aiff
-      # Auto-remove notification after sound
-      terminal-notifier -remove claude-input
-      # Set cooldown
-      date +%s > "$COOLDOWN_FILE"
-      rm -f "$PIDFILE"
-    ) &
+      terminal-notifier -title "You there?" -message "Claude needs your input." -group claude-input -sound Bottle
+      date +%s > "'"$COOLDOWN_FILE"'"
+      rm -f "'"$PIDFILE"'"
+    ' >/dev/null 2>&1 &
     echo $! > "$PIDFILE"
     exit 0
     ;;
 esac
 
-# Away from terminal — notify immediately with Glass sound, then auto-remove
-terminal-notifier -title 'Input Needed' -message 'Claude is waiting for you.' -group claude-input
-afplay /System/Library/Sounds/Glass.aiff
-terminal-notifier -remove claude-input &
+# Away from terminal — notify immediately with Glass sound
+terminal-notifier -title "Input Needed" -message "Claude is waiting for you." -group claude-input -sound Glass
 exit 0
