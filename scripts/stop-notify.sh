@@ -1,7 +1,7 @@
 #!/bin/bash
 # Smart Notification — Stop hook (task complete)
 # Sound: Purr (away) / Bottle (idle 30s)
-# -group ensures only one notification per type (replaces old, no clutter)
+# Notifications auto-dismiss after a few seconds — no clutter
 
 TOGGLE_FILE="$HOME/.claude/.smart-notifications-enabled"
 PIDFILE="/tmp/claude-idle-stop.pid"
@@ -35,6 +35,8 @@ case "$app" in
         [ $(( now - last )) -lt 300 ] && exit 0
       fi
       terminal-notifier -title "You there?" -message "Claude finished your task." -group claude-stop -sound Bottle
+      sleep 3
+      terminal-notifier -remove claude-stop
       date +%s > "'"$COOLDOWN_FILE"'"
       rm -f "'"$PIDFILE"'"
     ' >/dev/null 2>&1 &
@@ -43,6 +45,7 @@ case "$app" in
     ;;
 esac
 
-# Away from terminal — notify immediately with Purr sound
+# Away from terminal — notify immediately with Purr sound, then auto-dismiss
 terminal-notifier -title "Done!" -message "Check your Claude terminal." -group claude-stop -sound Purr
+( sleep 3; terminal-notifier -remove claude-stop ) &
 exit 0

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Smart Notification — Notification hook (needs input)
 # Sound: Glass (away) / Bottle (idle 30s)
-# -group ensures only one notification per type (replaces old, no clutter)
+# Notifications auto-dismiss after a few seconds — no clutter
 
 TOGGLE_FILE="$HOME/.claude/.smart-notifications-enabled"
 PIDFILE="/tmp/claude-idle-input.pid"
@@ -35,6 +35,8 @@ case "$app" in
         [ $(( now - last )) -lt 300 ] && exit 0
       fi
       terminal-notifier -title "You there?" -message "Claude needs your input." -group claude-input -sound Bottle
+      sleep 3
+      terminal-notifier -remove claude-input
       date +%s > "'"$COOLDOWN_FILE"'"
       rm -f "'"$PIDFILE"'"
     ' >/dev/null 2>&1 &
@@ -43,6 +45,7 @@ case "$app" in
     ;;
 esac
 
-# Away from terminal — notify immediately with Glass sound
+# Away from terminal — notify immediately with Glass sound, then auto-dismiss
 terminal-notifier -title "Input Needed" -message "Claude is waiting for you." -group claude-input -sound Glass
+( sleep 3; terminal-notifier -remove claude-input ) &
 exit 0
