@@ -38,8 +38,6 @@ Sound is delivered via `terminal-notifier -sound <name>` (non-blocking). No `afp
 | `~/.claude/.smart-notifications-enabled` | Toggle (exists = ON) |
 | `/tmp/claude-idle-stop.pid` | Background idle timer PID (stop hook) |
 | `/tmp/claude-idle-input.pid` | Background idle timer PID (input hook) |
-| `/tmp/claude-idle-stop.cooldown` | Unix timestamp of last idle notification |
-| `/tmp/claude-idle-input.cooldown` | Unix timestamp of last idle notification |
 
 ## Development Notes
 
@@ -47,7 +45,7 @@ Sound is delivered via `terminal-notifier -sound <name>` (non-blocking). No `afp
 - Idle timers use `nohup bash -c '...' >/dev/null 2>&1 &` to survive hook timeout process group kill.
 - The `-group` parameter on `terminal-notifier` prevents duplicate notifications (new ones replace old).
 - Auto-dismiss runs in a background subshell: `( sleep 3; terminal-notifier -remove <group> ) &`
-- Cooldown and PID cleanup happen immediately after notification send, before the 3s dismiss delay.
+- PID cleanup happens immediately after notification send, before the 3s dismiss delay.
 - Both source scripts (`scripts/`) and installed copies (`~/.claude/scripts/`) must be kept in sync.
 
 ## Testing

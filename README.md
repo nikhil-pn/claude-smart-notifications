@@ -23,8 +23,6 @@
 
 **Auto-dismiss** — notifications appear with sound, stay visible for 3 seconds, then auto-dismiss. No clutter.
 
-**One-time idle alerts** — idle notifications have a 5-minute cooldown so you only get notified once, not spammed.
-
 **Non-blocking sound** — uses `terminal-notifier -sound` flag for reliable, non-blocking audio. No `afplay` dependency.
 
 **Toggle on/off** — use `/smart-notifications on|off|status` inside Claude Code.
@@ -141,7 +139,7 @@ Still idle after 30s?
     |
     v
 Notify with Bottle sound
-"You there?" (auto-dismiss, 5min cooldown)
+"You there?" (auto-dismiss)
 ```
 
 ---
@@ -173,7 +171,6 @@ bash ~/.claude/scripts/input-notify.sh   # Trigger input notification
 | Change sounds | Edit `stop-notify.sh` / `input-notify.sh` — replace sound names with any file from `/System/Library/Sounds/` |
 | Add more editors | Add app names to the `case` statement in both scripts (e.g., `Warp\|Alacritty`) |
 | Change idle timeout | Replace `sleep 30` with your preferred seconds |
-| Change cooldown | Replace `300` (seconds) in cooldown check with your preferred duration |
 | Change messages | Edit `-title` and `-message` values in the scripts |
 | List available sounds | `ls /System/Library/Sounds/` |
 
@@ -190,7 +187,7 @@ rm -f ~/.claude/.smart-notifications-enabled
 # Kill any pending timers
 kill $(cat /tmp/claude-idle-stop.pid 2>/dev/null) 2>/dev/null
 kill $(cat /tmp/claude-idle-input.pid 2>/dev/null) 2>/dev/null
-rm -f /tmp/claude-idle-stop.pid /tmp/claude-idle-input.pid /tmp/claude-idle-stop.cooldown /tmp/claude-idle-input.cooldown
+rm -f /tmp/claude-idle-stop.pid /tmp/claude-idle-input.pid
 ```
 
 Then remove the `Stop` and `Notification` hooks from `~/.claude/settings.json`.

@@ -5,7 +5,6 @@
 
 TOGGLE_FILE="$HOME/.claude/.smart-notifications-enabled"
 PIDFILE="/tmp/claude-idle-input.pid"
-COOLDOWN_FILE="/tmp/claude-idle-input.cooldown"
 
 [ ! -f "$TOGGLE_FILE" ] && exit 0
 
@@ -19,23 +18,12 @@ rm -f /tmp/claude-idle-notify.pid
 # Detect frontmost app
 app=$(osascript -e 'tell application "System Events" to get name of first application process whose frontmost is true' 2>/dev/null)
 
-# Terminal apps — start 30s idle timer with Bottle sound (one-time only)
+# Terminal apps — start 30s idle timer with Bottle sound
 case "$app" in
   Terminal|iTerm2|Code|Cursor|Comet)
-    if [ -f "$COOLDOWN_FILE" ]; then
-      last=$(cat "$COOLDOWN_FILE")
-      now=$(date +%s)
-      [ $(( now - last )) -lt 300 ] && exit 0
-    fi
     nohup bash -c '
       sleep 30
-      if [ -f "'"$COOLDOWN_FILE"'" ]; then
-        last=$(cat "'"$COOLDOWN_FILE"'")
-        now=$(date +%s)
-        [ $(( now - last )) -lt 300 ] && exit 0
-      fi
       terminal-notifier -title "You there?" -message "Claude needs your input." -group claude-input -sound Bottle
-      date +%s > "'"$COOLDOWN_FILE"'"
       rm -f "'"$PIDFILE"'"
       sleep 3
       terminal-notifier -remove claude-input

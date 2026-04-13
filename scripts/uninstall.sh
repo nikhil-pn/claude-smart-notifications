@@ -7,8 +7,6 @@ for f in /tmp/claude-idle-stop.pid /tmp/claude-idle-input.pid; do
   [ -f "$f" ] && kill "$(cat "$f")" 2>/dev/null
   rm -f "$f"
 done
-rm -f /tmp/claude-idle-stop.cooldown /tmp/claude-idle-input.cooldown
-
 # Remove scripts
 rm -f "$HOME/.claude/scripts/stop-notify.sh"
 rm -f "$HOME/.claude/scripts/input-notify.sh"
